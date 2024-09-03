@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  auto-login:
+  auto-save:
     runs-on: ubuntu-latest
 
     steps:
