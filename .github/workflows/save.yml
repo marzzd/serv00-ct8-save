@@ -25,7 +25,7 @@ jobs:
 
       - name: Run Python script
         env:
-          LOGIN_INFO: ${{ secrets.SAVE_INFO }}
+          SAVE_INFO: ${{ secrets.SAVE_INFO }}
           TEL_INFO: ${{ secrets.TEL_INFO }}
 
         run: python save.py
