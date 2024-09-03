@@ -26,7 +26,7 @@ def ssh_connections(infos):
             exit_status, output, errors = ssh.exec(ipunban_command)
             if exit_status == 0:
                 flags.append(1)
-                fail_msgs.append(f'{utils.get_time()} 用户：{username} 执行ssh链接成功，ip解封成功，返回内容：{output}')
+                success_msgs.append(f'{utils.get_time()} 用户：{username} 执行ssh链接成功，ip解封成功，返回内容：{output}')
             else:
                 flags.append(0)
                 fail_msgs.append(f'{utils.get_time()} 用户：{username} 执行ssh链接成功但ip解锁失败，原因：{errors}')
@@ -122,7 +122,6 @@ def tel_push(info, message):
 
 save_infos = json.loads(os.getenv('SAVE_INFO', '[]'))
 tel_info = json.loads(os.getenv('TEL_INFO', '{}'))
-
 
 ssh_num, ssh_succe_num, ssh_fail_msgs, ssh_success_msgs = ssh_connections(save_infos)
 tel_push(tel_info, f'ssh连接结果统计:\n总账号数: {ssh_num}\n连接成功账号数: {ssh_succe_num}\n'
