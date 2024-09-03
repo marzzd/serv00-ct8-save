@@ -44,11 +44,7 @@ ipunban() {
     post_command="curl -X POST -i $ip_unban_url -H 'user-agent:$user_agent' -H 'Content-Type: application/x-www-form-urlencoded' -H 'Referer: $ip_unban_url' -H 'cookie: csrftoken=$csrf' --data-raw 'server=$servnum'"
     post_response=$(eval $post_command)
 
-    local http_status=$(echo "$post_response" | awk -F": " '/^status:/ {print $2}' | awk '{print $1}')
-    local status=$(echo "$post_response" | awk -F'"status": "' '{print $2}' | awk -F'"' '{print $1}')
-    echo "http状态码：$http_status 返回状态码： $status"
-
-    if [[ "$http_status" == "201" ]] && [[ "$status" == "OK" ]]; then
+    if [[ $post_response == *"status: 201"* ]] && [[ $post_response == *"{\"status\": \"OK\"}" ]]; then
         echo "$serv_type 服务器ip：$ip 于北京时间: $now_time 解锁成功"
     else
         echo "$serv_type 服务器ip：$ip 于北京时间: $now_time 解锁失败，原因：解锁返回结果失败，请手动解锁，返回内容：$post_response"
