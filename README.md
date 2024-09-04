@@ -27,11 +27,12 @@
     - `SAVE_INFO`：包含SSH与管理后台连接信息的JSON字符串。以下是示例
       ```json
       [
-        {"ssh_url": "ssh连接地址", "panel_url":"管理后台地址", "username": "用户名", "password": "密码"},
+        {"ssh_url": "ssh连接地址", "panel_url":"管理后台地址", "username": "用户名", "password": "密码","script": "额外命令"},
         {"ssh_url": "s5.serv00.com","panel_url":"panel5.serv00.com", "username": "user", "password": "password"},
-        {"ssh_url": "s1.ct8.pl","panel_url":"panel.ct8.pl", "username": "user6", "password": "password6"}
+        {"ssh_url": "s1.ct8.pl","panel_url":"panel.ct8.pl", "username": "user6", "password": "password6","script": "pwd"}
       ]
       ```
+      注意：script属性是针对ip解封命令执行完毕后的额外单行命令，用户可自行设置，用于满足其他需求
   - **配置TEL_INFO**
     - `TEL_INFO`：包含telegram的bot token与telegram chat id**
     - 格式如下：
