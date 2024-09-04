@@ -10,16 +10,17 @@ beijing_timezone = timezone(timedelta(hours=8))
 # ip解封命令 通过vps自己的ip访问官网解封地址进行解封
 ipunban_command = 'bash <(curl -s https://raw.githubusercontent.com/marzzd/serv00-ct8-save/main/ipunban.sh)'
 
-
 def ssh_connections(infos):
     flags = []
     fail_msgs = []
     success_msgs = []
+    script_msgs = []
     for info in infos:
         ssh_url = info['ssh_url']
         bak_url = info['panel_url']
         username = info['username']
         password = info['password']
+        script = info['script']
         ssh = None
         try:
             ssh = SshBase(ssh_url, bak_url, username, password)
@@ -30,13 +31,23 @@ def ssh_connections(infos):
             else:
                 flags.append(0)
                 fail_msgs.append(f'{utils.get_time()} 用户：{username} 执行ssh链接成功但ip解锁失败，原因：{errors}')
+            if script is not None and script != '':
+                try:
+                    script_exit_status, script_output, script_errors = ssh.exec(script)
+                    if script_exit_status == 0:
+                        script_msgs.append(f'{utils.get_time()} 用户：{username} 执行ssh额外脚本成功，返回内容：{script_output}')
+                    else:
+                        script_msgs.append(
+                            f'{utils.get_time()} 用户：{username} 执行ssh额外脚本失败，原因：{script_errors}')
+                except Exception as e1:
+                    script_msgs.append(str(e1))
         except Exception as e:
             flags.append(0)
             fail_msgs.append(str(e))
         finally:
             if ssh is not None:
                 del ssh
-    return len(infos), sum(flags), "\n".join(fail_msgs), "\n".join(success_msgs)
+    return len(infos), sum(flags), "\n".join(fail_msgs), "\n".join(success_msgs), "\n".join(script_msgs)
 
 
 def accounts_login(infos):
@@ -123,10 +134,12 @@ def tel_push(info, message):
 save_infos = json.loads(os.getenv('SAVE_INFO', '[]'))
 tel_info = json.loads(os.getenv('TEL_INFO', '{}'))
 
-ssh_num, ssh_succe_num, ssh_fail_msgs, ssh_success_msgs = ssh_connections(save_infos)
+ssh_num, ssh_succe_num, ssh_fail_msgs, ssh_success_msgs, ssh_script_msgs = ssh_connections(save_infos)
 tel_push(tel_info, f'ssh连接结果统计:\n总账号数: {ssh_num}\n连接成功账号数: {ssh_succe_num}\n'
-                   f'连接失败账号数: {ssh_num - ssh_succe_num}\n\n失败信息如下:\n{ssh_fail_msgs}\n\n'
-                   f'成功信息如下:\n{ssh_success_msgs}\n')
+                   f'连接失败账号数: {ssh_num - ssh_succe_num}\n\n'
+                   f'失败信息如下:\n{ssh_fail_msgs}\n\n'
+                   f'成功信息如下:\n{ssh_success_msgs}\n\n'
+                   f'额外脚本信息如下:\n{ssh_script_msgs}\n')
 
 account_num, account_succe_num, account_fail_msgs, account_success_msgs = accounts_login(save_infos)
 tel_push(tel_info, f'管理后台登录结果统计:\n总账号数: {account_num}\n登录成功账号数: {account_succe_num}\n'
