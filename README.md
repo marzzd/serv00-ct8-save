@@ -29,7 +29,7 @@
       [
         {"ssh_url": "ssh连接地址", "panel_url":"管理后台地址", "username": "用户名", "password": "密码","script": "额外命令"},
         {"ssh_url": "s5.serv00.com","panel_url":"panel5.serv00.com", "username": "user", "password": "password"},
-        {"ssh_url": "s1.ct8.pl","panel_url":"panel.ct8.pl", "username": "user6", "password": "password6","script": "pwd"}
+        {"ssh_url": "s1.ct8.pl","panel_url":"panel.ct8.pl", "username": "user6", "password": "password6","script": "bash <(curl -s https://raw.githubusercontent.com/marzzd/serv00-ct8-save/main/script.sh)"}
       ]
       ```
       注意：script属性是针对ip解封命令执行完毕后的额外单行命令，用户可自行设置，用于满足其他需求
