@@ -7,7 +7,7 @@ from ssh import SshBase
 
 beijing_timezone = timezone(timedelta(hours=8))
 
-# ip解封命令 通过vps自己的ip访问官网解封地址进行解封
+# todo 逻辑错了 应该是用常用ip去解锁，后面调整  ip解封命令 通过vps自己的ip访问官网解封地址进行解封
 ipunban_command = 'bash <(curl -s https://raw.githubusercontent.com/marzzd/serv00-ct8-save/main/ipunban.sh)'
 
 def ssh_connections(infos):
@@ -15,6 +15,7 @@ def ssh_connections(infos):
     fail_msgs = []
     success_msgs = []
     script_msgs = []
+    hostnames = ' '.join([urlparse(item['ssh_url']).hostname for item in infos])
     for info in infos:
         ssh_url = info['ssh_url']
         bak_url = info['panel_url']
@@ -24,7 +25,9 @@ def ssh_connections(infos):
         ssh = None
         try:
             ssh = SshBase(ssh_url, bak_url, username, password)
-            exit_status, output, errors = ssh.exec(ipunban_command)
+            # 只需要解锁其他域名即可，本地意义不大
+            ssh_hostname = urlparse(ssh_url).hostname
+            exit_status, output, errors = ssh.exec(f'{ipunban_command} {hostnames.replace(ssh_hostname, "")}')
             if exit_status == 0:
                 flags.append(1)
                 success_msgs.append(f'{utils.get_time()} 用户：{username} 执行ssh链接成功，ip解封成功，返回内容：{output}')
