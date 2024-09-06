@@ -1,21 +1,27 @@
 import json
 import os
 from datetime import datetime, timezone, timedelta
+from urllib.parse import urlparse
 
 import utils
 from ssh import SshBase
 
 beijing_timezone = timezone(timedelta(hours=8))
 
-# todo 逻辑错了 应该是用常用ip去解锁，后面调整  ip解封命令 通过vps自己的ip访问官网解封地址进行解封
 ipunban_command = 'bash <(curl -s https://raw.githubusercontent.com/marzzd/serv00-ct8-save/main/ipunban.sh)'
+
+def ensure_http(url):
+    if not urlparse(url).scheme:
+        url = "http://" + url
+    return url
+
 
 def ssh_connections(infos):
     flags = []
     fail_msgs = []
     success_msgs = []
     script_msgs = []
-    hostnames = ' '.join([urlparse(item['ssh_url']).hostname for item in infos])
+    hostnames = ' '.join([urlparse(ensure_http(item['ssh_url'])).hostname for item in infos])
     for info in infos:
         ssh_url = info['ssh_url']
         bak_url = info['panel_url']
@@ -26,22 +32,23 @@ def ssh_connections(infos):
         try:
             ssh = SshBase(ssh_url, bak_url, username, password)
             # 只需要解锁其他域名即可，本地意义不大
-            ssh_hostname = urlparse(ssh_url).hostname
-            exit_status, output, errors = ssh.exec(f'{ipunban_command} {hostnames.replace(ssh_hostname, "")}')
+            ssh_hostname = urlparse(ensure_http(ssh_url)).hostname
+            ssh_hosts = hostnames.replace(ssh_hostname, "")
+            exit_status, output, errors = ssh.exec(f'{ipunban_command} {ssh_hosts}')
             if exit_status == 0:
                 flags.append(1)
-                success_msgs.append(f'{utils.get_time()} 用户：{username} 执行ssh链接成功，ip解封成功，返回内容：{output}')
+                success_msgs.append(f'{utils.get_time()} 用户：{username} 执行ssh链接成功，ip解封成功，返回内容如下：\n{output}')
             else:
                 flags.append(0)
-                fail_msgs.append(f'{utils.get_time()} 用户：{username} 执行ssh链接成功但ip解锁失败，原因：{errors}')
+                fail_msgs.append(f'{utils.get_time()} 用户：{username} 执行ssh链接成功但ip解锁失败，原因如下：\n{errors}')
             if script is not None and script != '':
                 try:
                     script_exit_status, script_output, script_errors = ssh.exec(script)
                     if script_exit_status == 0:
-                        script_msgs.append(f'{utils.get_time()} 用户：{username} 执行ssh额外脚本成功，返回内容：{script_output}')
+                        script_msgs.append(f'{utils.get_time()} 用户：{username} 执行ssh额外脚本成功，返回内容如下：\n{script_output}')
                     else:
                         script_msgs.append(
-                            f'{utils.get_time()} 用户：{username} 执行ssh额外脚本失败，原因：{script_errors}')
+                            f'{utils.get_time()} 用户：{username} 执行ssh额外脚本失败，原因如下：\n{script_errors}')
                 except Exception as e1:
                     script_msgs.append(str(e1))
         except Exception as e:
