@@ -20,21 +20,21 @@ gen_random_useragent() {
 
 # IP解锁
 ipunban() {
-    local ip=$(ping -c 1 $(hostname) | awk -F'[()]' '/PING/{print $2}')
-    local hostname=$(hostname)
-    local serv_type="serv00"
+    local ip="$1"
+    local hostname="$2"
+    local now_time="$3"
+
     local ip_unban_url="https://www.serv00.com/ip_unban/"
     if [[ "$hostname" != *"serv00"* ]]; then
-        serv_type="ct8"
         ip_unban_url="https://www.ct8.pl/ip_unban/"
     fi
-    now_time=$(TZ='Asia/Shanghai' date +"%Y-%m-%d %H:%M:%S")
+
     user_agent=$(gen_random_useragent)
     command="curl -X GET -i $ip_unban_url -H 'user-agent:$user_agent'"
     response=$(eval $command)
 
     if [[ ! $response == *"$ip"* ]]; then
-        echo "$serv_type 服务器ip：$ip 于北京时间: $now_time 解锁失败，原因：官方解锁界面ip与本地不一致"
+        echo "服务器ip：$ip 于北京时间: $now_time 解锁域名：$hostname 失败，原因：官方解锁界面ip与本地不一致"
         exit 1
     fi
 
@@ -45,11 +45,31 @@ ipunban() {
     post_response=$(eval $post_command)
 
     if [[ $post_response == *"status: 201"* ]] && [[ $post_response == *"{\"status\": \"OK\"}" ]]; then
-        echo "$serv_type 服务器ip：$ip 于北京时间: $now_time 解锁成功"
+        echo "服务器ip：$ip 于北京时间: $now_time 解锁域名：$hostname 成功"
     else
-        echo "$serv_type 服务器ip：$ip 于北京时间: $now_time 解锁失败，原因：解锁返回结果失败，请手动解锁，返回内容：$post_response"
+        echo "服务器ip：$ip 于北京时间: $now_time 解锁域名：$hostname 失败，原因：解锁返回结果失败，请手动解锁，返回内容：$post_response"
     fi
-
 }
 
-ipunban
+
+# 获取当前主机IP和其他信息
+main() {
+    local ip=$(ping -c 1 $(hostname) | awk -F'[()]' '/PING/{print $2}')
+    local now_time=$(TZ='Asia/Shanghai' date +"%Y-%m-%d %H:%M:%S")
+
+    # 如果一个hostname都没传，则自己解锁自己
+    if [ "$#" -eq 0 ]; then
+        local hostname=$(hostname)
+        ipunban "$ip" "$hostname" "$now_time"
+        exit 1
+    fi
+
+    # Loop through all the provided hostnames
+    for hostname in "$@"; do
+        # 调用ipunban函数
+        ipunban "$ip" "$hostname" "$now_time"
+    done
+}
+
+# 调用main函数并传入所有的hostname参数
+main "$@"
